@@ -188,19 +188,19 @@
                 {
                     "Name": "RequestSize",
                     "Local": {
-                        "0": "-request:0"
+                        "0": "-request:300"
                     },
-                    "Default": "0"
+                    "Default": "300"
                 },
                 {
                     "Name": "ResponseSize",
                     "Local": {
                         "0": "-response:0",
                         "512": "-response:512",
-                        "4096": "-response:4096",
+                        "4096": "-response:87000",
                         "16384": "-response:16384"
                     },
-                    "Default": "4096"
+                    "Default": "87000"
                 }
             ],
             "AllowLoopback": false,
