@@ -70,6 +70,9 @@ typedef _In_range_(0, QUIC_UINT62_MAX) uint64_t QUIC_UINT62;
 //
 #define QUIC_MAX_RESUMPTION_APP_DATA_LENGTH     1000
 
+// Disable QUIC TLS ENCRYPTION
+#define QUIC_API_ENABLE_INSECURE_FEATURES 1
+
 typedef enum QUIC_TLS_PROVIDER {
     QUIC_TLS_PROVIDER_SCHANNEL                  = 0x0000,
     QUIC_TLS_PROVIDER_OPENSSL                   = 0x0001,
