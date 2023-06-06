@@ -79,7 +79,7 @@ typedef struct CXPLAT_INTERFACE {
     CXPLAT_LIST_ENTRY Link;
     uint32_t IfIndex;
     uint32_t ActualIfIndex;
-    UCHAR PhysicalAddress[ETH_MAC_ADDR_LEN];
+    uint8_t PhysicalAddress[ETH_MAC_ADDR_LEN];
     struct {
         struct {
             BOOLEAN NetworkLayerXsum : 1;
@@ -293,7 +293,7 @@ CxPlatSockPoolUninitialize(
 // so it assumes that matches already.
 //
 inline
-BOOL
+BOOLEAN
 CxPlatSocketCompare(
     _In_ CXPLAT_SOCKET* Socket,
     _In_ const QUIC_ADDR* LocalAddress,
