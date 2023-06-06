@@ -9,9 +9,9 @@ Abstract:
 
 --*/
 
-#include "datapath_raw.h"
+#include "datapath_raw_linux.h"
 #ifdef QUIC_CLOG
-#include "datapath_raw.c.clog.h"
+#include "datapath_raw_linux.c.clog.h"
 #endif
 
 #pragma warning(disable:4116) // unnamed type definition in parentheses
@@ -232,6 +232,7 @@ CxPlatDataPathGetSupportedFeatures(
     _In_ CXPLAT_DATAPATH* Datapath
     )
 {
+    UNREFERENCED_PARAMETER(Datapath);
     return 0;
 }
 
@@ -241,6 +242,7 @@ CxPlatDataPathIsPaddingPreferred(
     _In_ CXPLAT_DATAPATH* Datapath
     )
 {
+    UNREFERENCED_PARAMETER(Datapath);
     return FALSE;
 }
 
@@ -254,6 +256,9 @@ CxPlatDataPathGetLocalAddresses(
     _Out_ uint32_t* AddressesCount
     )
 {
+    UNREFERENCED_PARAMETER(Datapath);
+    UNREFERENCED_PARAMETER(Addresses);
+    UNREFERENCED_PARAMETER(AddressesCount);
     return QUIC_STATUS_NOT_SUPPORTED;
 }
 
@@ -267,40 +272,25 @@ CxPlatDataPathGetGatewayAddresses(
     _Out_ uint32_t* GatewayAddressesCount
     )
 {
+    UNREFERENCED_PARAMETER(Datapath);
+    UNREFERENCED_PARAMETER(GatewayAddresses);
+    UNREFERENCED_PARAMETER(GatewayAddressesCount);
     return QUIC_STATUS_NOT_SUPPORTED;
 }
 
 void
 CxPlatDataPathPopulateTargetAddress(
-    _In_ ADDRESS_FAMILY Family,
-    _In_ ADDRINFOW *Ai,
-    _Out_ SOCKADDR_INET* Address
+    _In_ QUIC_ADDRESS_FAMILY Family,
+    _In_ ADDRINFO* AddrInfo,
+    _Out_ QUIC_ADDR* Address
     )
 {
-    if (Ai->ai_addr->sa_family == QUIC_ADDRESS_FAMILY_INET6) {
-        //
-        // Is this a mapped ipv4 one?
-        //
-        PSOCKADDR_IN6 SockAddr6 = (PSOCKADDR_IN6)Ai->ai_addr;
-
-        if (Family == QUIC_ADDRESS_FAMILY_UNSPEC && IN6ADDR_ISV4MAPPED(SockAddr6))
-        {
-            PSOCKADDR_IN SockAddr4 = &Address->Ipv4;
-            //
-            // Get the ipv4 address from the mapped address.
-            //
-            SockAddr4->sin_family = QUIC_ADDRESS_FAMILY_INET;
-            SockAddr4->sin_addr =
-                *(IN_ADDR UNALIGNED *)
-                    IN6_GET_ADDR_V4MAPPED(&SockAddr6->sin6_addr);
-            SockAddr4->sin_port = SockAddr6->sin6_port;
-            return;
-        }
-    }
-
-    CxPlatCopyMemory(Address, Ai->ai_addr, Ai->ai_addrlen);
+    UNREFERENCED_PARAMETER(Family);
+    UNREFERENCED_PARAMETER(AddrInfo);
+    UNREFERENCED_PARAMETER(Address);
 }
 
+// ->CxPlat
 _IRQL_requires_max_(PASSIVE_LEVEL)
 QUIC_STATUS
 CxPlatDataPathResolveAddress(
@@ -309,69 +299,10 @@ CxPlatDataPathResolveAddress(
     _Inout_ QUIC_ADDR* Address
     )
 {
-    QUIC_STATUS Status;
-    PWSTR HostNameW = NULL;
-    ADDRINFOW Hints = { 0 };
-    ADDRINFOW *Ai;
-
-    Status =
-        CxPlatUtf8ToWideChar(
-            HostName,
-            QUIC_POOL_PLATFORM_TMP_ALLOC,
-            &HostNameW);
-    if (QUIC_FAILED(Status)) {
-        QuicTraceEvent(
-            LibraryErrorStatus,
-            "[ lib] ERROR, %u, %s.",
-            Status,
-            "Convert HostName to unicode");
-        goto Exit;
-    }
-
-    //
-    // Prepopulate hint with input family. It might be unspecified.
-    //
-    Hints.ai_family = Address->si_family;
-
-    //
-    // Try numeric name first.
-    //
-    Hints.ai_flags = AI_NUMERICHOST;
-    if (GetAddrInfoW(HostNameW, NULL, &Hints, &Ai) == 0) {
-        CxPlatDataPathPopulateTargetAddress((ADDRESS_FAMILY)Hints.ai_family, Ai, Address);
-        FreeAddrInfoW(Ai);
-        Status = QUIC_STATUS_SUCCESS;
-        goto Exit;
-    }
-
-    //
-    // Try canonical host name.
-    //
-    Hints.ai_flags = AI_CANONNAME;
-    if (GetAddrInfoW(HostNameW, NULL, &Hints, &Ai) == 0) {
-        CxPlatDataPathPopulateTargetAddress((ADDRESS_FAMILY)Hints.ai_family, Ai, Address);
-        FreeAddrInfoW(Ai);
-        Status = QUIC_STATUS_SUCCESS;
-        goto Exit;
-    }
-
-    QuicTraceEvent(
-        LibraryError,
-        "[ lib] ERROR, %s.",
-        "Resolving hostname to IP");
-    QuicTraceLogError(
-        DatapathResolveHostNameFailed,
-        "[%p] Couldn't resolve hostname '%s' to an IP address",
-        Datapath,
-        HostName);
-    Status = HRESULT_FROM_WIN32(WSAHOST_NOT_FOUND);
-
-Exit:
-
-    if (HostNameW != NULL) {
-        CXPLAT_FREE(HostNameW, QUIC_POOL_PLATFORM_TMP_ALLOC);
-    }
-
+    UNREFERENCED_PARAMETER(Datapath);
+    UNREFERENCED_PARAMETER(HostName);
+    UNREFERENCED_PARAMETER(Address);
+    QUIC_STATUS Status = QUIC_STATUS_NOT_SUPPORTED;
     return Status;
 }
 
@@ -470,6 +401,11 @@ CxPlatSocketCreateTcp(
     _Out_ CXPLAT_SOCKET** Socket
     )
 {
+    UNREFERENCED_PARAMETER(Datapath);
+    UNREFERENCED_PARAMETER(LocalAddress);
+    UNREFERENCED_PARAMETER(RemoteAddress);
+    UNREFERENCED_PARAMETER(CallbackContext);
+    UNREFERENCED_PARAMETER(Socket);
     return QUIC_STATUS_NOT_SUPPORTED;
 }
 
@@ -482,6 +418,10 @@ CxPlatSocketCreateTcpListener(
     _Out_ CXPLAT_SOCKET** NewSocket
     )
 {
+    UNREFERENCED_PARAMETER(Datapath);
+    UNREFERENCED_PARAMETER(LocalAddress);
+    UNREFERENCED_PARAMETER(RecvCallbackContext);
+    UNREFERENCED_PARAMETER(NewSocket);
     return QUIC_STATUS_NOT_SUPPORTED;
 }
 
@@ -505,8 +445,23 @@ CxPlatSocketDelete(
     CXPLAT_FREE(Socket, QUIC_POOL_SOCKET);
 }
 
+_IRQL_requires_max_(PASSIVE_LEVEL)
+QUIC_STATUS
+CxPlatSocketUpdateQeo(
+    _In_ CXPLAT_SOCKET* Socket,
+    _In_reads_(OffloadCount)
+        const CXPLAT_QEO_CONNECTION* Offloads,
+    _In_ uint32_t OffloadCount
+    )
+{
+    UNREFERENCED_PARAMETER(Socket);
+    UNREFERENCED_PARAMETER(Offloads);
+    UNREFERENCED_PARAMETER(OffloadCount);
+    return QUIC_STATUS_NOT_SUPPORTED;
+}
+
 _IRQL_requires_max_(DISPATCH_LEVEL)
-UINT16
+uint16_t
 CxPlatSocketGetLocalMtu(
     _In_ CXPLAT_SOCKET* Socket
     )
@@ -652,6 +607,8 @@ CxPlatSendDataFreeBuffer(
     _In_ QUIC_BUFFER* Buffer
     )
 {
+    UNREFERENCED_PARAMETER(SendData);
+    UNREFERENCED_PARAMETER(Buffer);
     // No-op
 }
 
@@ -661,6 +618,7 @@ CxPlatSendDataIsFull(
     _In_ CXPLAT_SEND_DATA* SendData
     )
 {
+    UNREFERENCED_PARAMETER(SendData);
     return TRUE;
 }
 
@@ -706,71 +664,9 @@ CxPlatSocketSend(
     return QUIC_STATUS_SUCCESS;
 }
 
+// ->CxPlat?
 CXPLAT_THREAD_CALLBACK(CxPlatRouteResolutionWorkerThread, Context)
 {
-    CXPLAT_ROUTE_RESOLUTION_WORKER* Worker = (CXPLAT_ROUTE_RESOLUTION_WORKER*)Context;
-
-    while (Worker->Enabled) {
-        CxPlatEventWaitForever(Worker->Ready);
-        CXPLAT_LIST_ENTRY Operations;
-        CxPlatListInitializeHead(&Operations);
-
-        CxPlatDispatchLockAcquire(&Worker->Lock);
-        if (!CxPlatListIsEmpty(&Worker->Operations)) {
-            CxPlatListMoveItems(&Worker->Operations, &Operations);
-        }
-        CxPlatDispatchLockRelease(&Worker->Lock);
-
-        while (!CxPlatListIsEmpty(&Operations)) {
-            CXPLAT_ROUTE_RESOLUTION_OPERATION* Operation =
-                CXPLAT_CONTAINING_RECORD(
-                    CxPlatListRemoveHead(&Operations), CXPLAT_ROUTE_RESOLUTION_OPERATION, WorkerLink);
-            NETIO_STATUS Status =
-            Status = GetIpNetEntry2(&Operation->IpnetRow);
-            if (Status != ERROR_SUCCESS || Operation->IpnetRow.State <= NlnsIncomplete) {
-                Status =
-                    ResolveIpNetEntry2(&Operation->IpnetRow, NULL);
-                if (Status != 0) {
-                    QuicTraceEvent(
-                        DatapathErrorStatus,
-                        "[data][%p] ERROR, %u, %s.",
-                        Operation,
-                        Status,
-                        "ResolveIpNetEntry2");
-                    Operation->Callback(
-                        Operation->Context, NULL, Operation->PathId, FALSE);
-                } else {
-                    Operation->Callback(
-                        Operation->Context, Operation->IpnetRow.PhysicalAddress, Operation->PathId, TRUE);
-                }
-            } else {
-                Operation->Callback(
-                    Operation->Context, Operation->IpnetRow.PhysicalAddress, Operation->PathId, TRUE);
-            }
-
-            CxPlatPoolFree(&Worker->OperationPool, Operation);
-        }
-    }
-
-    //
-    // Clean up leftover work.
-    //
-    CXPLAT_LIST_ENTRY Operations;
-    CxPlatListInitializeHead(&Operations);
-
-    CxPlatDispatchLockAcquire(&Worker->Lock);
-    if (!CxPlatListIsEmpty(&Worker->Operations)) {
-        CxPlatListMoveItems(&Worker->Operations, &Operations);
-    }
-    CxPlatDispatchLockRelease(&Worker->Lock);
-
-    while (!CxPlatListIsEmpty(&Operations)) {
-        CXPLAT_ROUTE_RESOLUTION_OPERATION* Operation =
-            CXPLAT_CONTAINING_RECORD(
-                CxPlatListRemoveHead(&Operations), CXPLAT_ROUTE_RESOLUTION_OPERATION, WorkerLink);
-        Operation->Callback(Operation->Context, NULL, Operation->PathId, FALSE);
-        CXPLAT_FREE(Operation, QUIC_POOL_ROUTE_RESOLUTION_OPER);
-    }
-
+    UNREFERENCED_PARAMETER(Context);
     return 0;
 }
