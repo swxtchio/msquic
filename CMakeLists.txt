@@ -340,6 +340,7 @@ endif()
 
 if(QUIC_USE_P2)
     list(APPEND QUIC_COMMON_DEFINES QUIC_USE_RAW_DATAPATH=1)
+    list(APPEND QUIC_COMMON_FLAGS -msse -msse2 -msse3 -mavx)
 endif()
 
 if(QUIC_OFFICIAL_RELEASE)
