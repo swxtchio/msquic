@@ -58,6 +58,7 @@ CXPLAT_STATIC_ASSERT(sizeof(P2_TX_PACKET) <= sizeof(P2_RX_PACKET),
 
 CXPLAT_THREAD_CALLBACK(CxPlatP2WorkerThread, Context);
 BOOLEAN CxPlatP2Initialize(P2_DATAPATH* P2Dpath);
+void CxPlatP2ReadConfig(P2_DATAPATH* P2Dpath);
 
 CXPLAT_RECV_DATA* CxPlatDataPathRecvPacketToRecvData(_In_ const CXPLAT_RECV_PACKET* const Context) {
     return (CXPLAT_RECV_DATA*)(((uint8_t*)Context) - sizeof(P2_RX_PACKET));
@@ -86,7 +87,8 @@ _IRQL_requires_max_(PASSIVE_LEVEL) QUIC_STATUS
     QUIC_STATUS Status = QUIC_STATUS_SUCCESS;
 
     // We can potentially read a file and fill all the stuff we need [idea]
-    // CxPlatDpdkReadConfig(Dpdk, Config);
+    CxPlatP2ReadConfig(P2Dpath);
+
     CxPlatPoolInitialize(FALSE, AdditionalBufferSize, QUIC_POOL_DATAPATH,
                          &P2Dpath->AdditionalInfoPool);
     CxPlatListInitializeHead(&P2Dpath->Interfaces);
@@ -133,6 +135,39 @@ _IRQL_requires_max_(PASSIVE_LEVEL) void CxPlatDpRawUninitialize(_In_ CXPLAT_DATA
 void CxPlatDataPathProcessCqe(_In_ CXPLAT_CQE* Cqe) {
     UNREFERENCED_PARAMETER(Cqe);
 }
+_IRQL_requires_max_(PASSIVE_LEVEL) void CxPlatP2ReadConfig(P2_DATAPATH* P2Dpath) {
+    FILE* File = fopen("p2.ini", "r");
+    if (File == NULL) {
+        return;
+    }
+    char Line[256];
+    while (fgets(Line, sizeof(Line), File) != NULL) {
+        char* Value = strchr(Line, '=');
+        if (Value == NULL) {
+            continue;
+        }
+        if (Value[strlen(Value) - 1] == '\n') {
+            Value[strlen(Value) - 1] = '\0';
+        }
+
+        if (strcmp(Line, "MacAddr") == 0) {
+            sscanf(Value, "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx", &P2Dpath->Interface.PhysicalAddress[0],
+                   &P2Dpath->Interface.PhysicalAddress[1], &P2Dpath->Interface.PhysicalAddress[2],
+                   &P2Dpath->Interface.PhysicalAddress[3], &P2Dpath->Interface.PhysicalAddress[4],
+                   &P2Dpath->Interface.PhysicalAddress[5]);
+            // strcpy(P2Dpath->Interface.PhysicalAddress, Value);
+        }
+
+        if(strcmp(Line,"IfIndex") == 0){
+            uint32_t IfIndex;
+            sscanf(Value, "%u", &IfIndex);
+            P2Dpath->Interface.IfIndex = IfIndex;
+            P2Dpath->Interface.ActualIfIndex = IfIndex;
+        }
+    }
+    fclose(File);
+}
+
 /**
  * @brief Initialize all P2 related stuff
  *
